@@ -9,4 +9,3 @@ else:
     exit(1)
 
 print(TrackerAPI.GetUser(name))
-aa

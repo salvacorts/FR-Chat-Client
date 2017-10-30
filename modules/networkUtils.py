@@ -1,4 +1,4 @@
 import requests
 
 def GetIP():
-    return requests.get('http://ip.42.pl/raw').text
+    return requests.get('https://ip.42.pl/raw').text

@@ -40,20 +40,3 @@ def Sign(msg, privKey):
     signature = signer.sign(h)
 
     return base64.b64encode(signature)
-
-
-# def ValidCredentials(currentPubKey, signature):
-#     signature = base64.b64decode(signature);
-#     print (currentPubKey)
-#     print(signature)
-#
-#     rsaKey = RSA.importKey(currentPubKey)
-#     h = SHA.new()
-#     h.update("abracadabra".encode("utf-8"))
-#     verifier = PKCS1_PSS.new(rsaKey)
-#
-#     return verifier.verify(h, signature)
-#
-# pub, priv = GetKeys()
-# signature = Sign("abracadabra", priv)
-# print(ValidCredentials(pub, signature))

@@ -1,16 +1,27 @@
 from modules.trackerAPI import TrackerAPI
+import modules.networkUtils as network
 
 name = input("[+] nombre: ")
 
-if TrackerAPI.AddUser(name):
+info = TrackerAPI.GetUser(name)
+currentIP = network.GetIP()
+
+if info == None:
+    TrackerAPI.AddUser(name)
     print("[*] Usuario Añadido")
+elif info["ip"] != currentIP:
+    TrackerAPI.UpdateUser(name, currentIP)
+    print("[*] Datos de usuario actualizados")
 else:
-    print("[!] Error añadiendo usuario")
+    print("[*] Los datos estan actualizados")
 
-print(TrackerAPI.GetUser(name))
+info = TrackerAPI.GetUser(name)
 
-print ("\n\n[*] Probando a cambiar info")
-TrackerAPI.UpdateUser(name, "192.168.1.255")
-print("[*] Usuario modificado")
+out = """
+Name: {0}
+IP: {1}
+Public Key:
+{2}
+""".format(info["name"], info["ip"], info["pubKey"])
 
-print(TrackerAPI.GetUser(name))
+print(out)

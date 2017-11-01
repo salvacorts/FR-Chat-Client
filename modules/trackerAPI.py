@@ -1,3 +1,4 @@
+import modules.exceptions as exceptions
 import modules.networkUtils as network
 import modules.keyring as keyring
 import requests, json
@@ -24,7 +25,7 @@ class TrackerAPI:
         r = requests.post(TrackerAPI.urlAdd, data=TrackerAPI.payloadAdd)
 
         if r.status_code == 409:
-            raise Exception("User already exists")
+            raise exceptions.DuplicatedUser("User already exists")
 
     @staticmethod
     def GetUser(name):
@@ -48,8 +49,8 @@ class TrackerAPI:
         r = requests.post(TrackerAPI.urlUpdate, TrackerAPI.payloadUpdate)
 
         if r.status_code == 404:
-            raise Exception("Unknown User")
+            raise exceptions.UnknownUser("Unknown User")
         elif r.status_code == 403:
-            raise Exception("Invalid Credentials")
+            raise exceptions.InvalidCredentials("Invalid Credentials")
         elif r.status_code != 202:
             raise Exception("Unknown error")

@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 from modules.trackerAPI import TrackerAPI
 import modules.exceptions as exceptions
 import modules.networkUtils as network

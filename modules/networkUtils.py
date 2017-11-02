@@ -17,8 +17,16 @@ def GetLocalIP():
     return ip
 
 
+def LaunchAndWaitThreads(threads):
+    for threadKey in threads.keys():
+        threads[threadKey].start()
+
+    while threads:
+        for threadKey in threads.keys():
+            threads[threadKey].join(1)
+
 # Print Incomming messages
-def Incoming(port):
+def Listen(port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
@@ -35,12 +43,9 @@ def Incoming(port):
         except:
             continue
 
-    while True:
-        print("[peer]> {}".format(s.recv(1024)))
-
 
 # Send messages
-def Outgoing(addr, port):
+def Connect(addr, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     while True:
@@ -51,21 +56,29 @@ def Outgoing(addr, port):
         except:
             continue
 
+    threads = {
+        "send": Thread(target=Send, args=(s,)),
+        "receive": Thread(target=Receive, args=(s,)),
+    }
+
+    LaunchAndWaitThreads(threads)
+    
+
+def Send(sock):
     while True:
         msg = input("[you]> ")
         s.send(msg)
 
+
+def Receive(sock):
+    while True:
+        print("[peer]> {}".format(s.recv(1024)))
+
+
 def StartPeerConnection(peerIP):
     threads = {
-        "local-incoming": Thread(target=Incoming, args=(INCOMING_PORT,)),
-        "local-outgoing": Thread(target=Incoming, args=(OUTGOING_PORT,)),
-        "peer-incoming": Thread(target=Outgoing, args=(peerIP, INCOMING_PORT_PEER)),
-        "peer-outgoing": Thread(target=Outgoing, args=(peerIP, OUTGOING_PORT_PEER))
+        "local-listen": Thread(target=Listen, args=(LISTEN_PORT,)),
+        "peer-conn": Thread(target=Connect, args=(peerIP, PEER_PORT)),
     }
 
-    for threadKey in threads.keys():
-        threads[threadKey].start()
-
-    while threads:
-        for threadKey in threads.keys():
-            threads[threadKey].join(1)
+    LaunchAndWaitThreads(threads)

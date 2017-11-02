@@ -1,7 +1,8 @@
 import modules.exceptions as exceptions
 import modules.networkUtils as network
 import modules.keyring as keyring
-import requests, json
+import requests
+import json
 
 class TrackerAPI:
     baseUrl="https://fr-ugr-rest.herokuapp.com"

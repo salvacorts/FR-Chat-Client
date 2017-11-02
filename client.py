@@ -4,7 +4,7 @@ import modules.networkUtils as network
 
 def UpdateUserInfo(name, t=3):
     info = TrackerAPI.GetUser(name)
-    currentIP = network.GetIP()
+    currentIP = network.GetPublicIP()
 
     try:
         if info == None:
@@ -29,15 +29,37 @@ def UpdateUserInfo(name, t=3):
 
     return TrackerAPI.GetUser(name)
 
-name = input("[+] Nombre: ")
 
-info = UpdateUserInfo(name)
+def main():
+    userName = input("[+] Tu Nombre: ")
+    peerName = input("[+] Nombre del amigo: ")
 
-out = """
-Name: {0}
-IP: {1}
-Public Key:
-{2}
-""".format(info["name"], info["ip"], info["pubKey"])
+    UserInfo = UpdateUserInfo(userName)
 
-print(out)
+
+    PeerInfo = TrackerAPI.GetUser(peerName)
+
+    if PeerInfo == None:
+        print("[!] El nombre de tu amigo no existe")
+        exit(1)
+
+
+    print("""
+    Name: {0}
+    IP: {1}
+    Public Key:
+    {2}
+    """.format(UserInfo["name"], UserInfo["ip"], UserInfo["pubKey"]))
+
+    print("""\n\n
+    Name: {0}
+    IP: {1}
+    Public Key:
+    {2}
+    """.format(PeerInfo["name"], PeerInfo["ip"], PeerInfo["pubKey"]))
+
+    network.StartPeerConnection(PeerInfo["ip"])
+
+
+if __name__ == '__main__':
+    main()

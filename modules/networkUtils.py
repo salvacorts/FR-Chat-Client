@@ -17,44 +17,50 @@ def GetLocalIP():
     return ip
 
 
-def Listen(port):
-    s = socket(socket.AF_INET, socket.SOCK_STREAM)
+# Print Incomming messages
+def Incoming(port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
     s.bind(("", port))
+    s.settimeout(5)
     s.listen(1)
+    conn = None
 
-    while True:
+    while conn == None:
         try:
-            conn, addr = s.accept()
             print("[+] Listening incoming conections")
+            conn, addr = s.accept()
         except:
             continue
 
+    while True:
+        print("[peer]> {}".format(s.recv(1024)))
 
-def Connect(localAddr, PeerAddr):
-    s = socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 
-    s.bind((localAddr, LOCAL_PORT))
+# Send messages
+def Outgoing(addr, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     while True:
         try:
-            s.connect(PeerAddr, PEER_PORT)
-            print("[+] Conncted to peer")
+            s.connect(addr, port)
+            print("[+] Connected to peer")
+            break;
         except:
             continue
 
-def Start(peerLocalIP, peerPublicIP):
-    localIP = socket.gethostname(socket.gethostname())
+    while True:
+        msg = input("[you]> ")
+        s.send(msg)
 
+def StartPeerConnection(peerIP):
     threads = {
-        'local_accept': Thread(target=Listen, args=(LOCAL_PORT,)),
-        'public_accept': Thread(target=Listen, args=(PEER_PORT,)),
-        'local_connect': Thread(target=Connect, args=(localIP, peerPublicIP,)),
-        'public_connect': Thread(target=Connect, args=(localIP, peerLocalIP,))
+        "local-incoming": Thread(target=Incoming, args=(INCOMING_PORT,)),
+        "local-outgoing": Thread(target=Incoming, args=(OUTGOING_PORT,)),
+        "peer-incoming": Thread(target=Outgoing, args=(peerIP, INCOMING_PORT_PEER)),
+        "peer-outgoing": Thread(target=Outgoing, args=(peerIP, OUTGOING_PORT_PEER))
     }
 
     for threadKey in threads.keys():

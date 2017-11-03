@@ -3,7 +3,7 @@ from threading import Thread
 import requests
 import socket
 
-# TODO: añadir TCP Hole Putching o si se pasa de dificil, UPnP
+KEEP_TRYING_CONN = True
 
 def GetPublicIP():
     return requests.get('https://ip.42.pl/raw').text
@@ -16,7 +16,6 @@ def GetLocalIP():
 
     return ip
 
-
 def LaunchAndWaitThreads(threads):
     for threadKey in threads.keys():
         threads[threadKey].start()
@@ -27,52 +26,81 @@ def LaunchAndWaitThreads(threads):
 
 # Print Incomming messages
 def Listen(port):
+    # DOC: https://stackoverflow.com/questions/14388706/socket-options-so-reuseaddr-and-so-reuseport-how-do-they-differ-do-they-mean-t
+    # DOC: http://pubs.opengroup.org/onlinepubs/009695399/functions/setsockopt.html
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-
     s.bind(("", port))
     s.settimeout(5)
     s.listen(1)
     conn = None
 
-    while conn == None:
+    global KEEP_TRYING_CONN
+    while conn == None or KEEP_TRYING_CONN:
         try:
             print("[+] Listening incoming conections")
             conn, addr = s.accept()
         except:
             continue
 
+    if conn != None:
+        KEEP_TRYING_CONN = False
+        threads = {
+            "send": Thread(target=Send, args=(s,)),
+            "receive": Thread(target=Receive, args=(s,)),
+        }
+
+        LaunchAndWaitThreads(threads)
+
 
 # Send messages
 def Connect(addr, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    s.bind(("", port))
+    success = False
 
-    while True:
+    global KEEP_TRYING_CONN
+    while KEEP_TRYING_CONN:
         try:
             s.connect(addr, port)
             print("[+] Connected to peer")
+            KEEP_TRYING_CONN = False
+            success = True
             break;
         except:
             continue
 
-    threads = {
-        "send": Thread(target=Send, args=(s,)),
-        "receive": Thread(target=Receive, args=(s,)),
-    }
+    if success:
+        threads = {
+            "send": Thread(target=Send, args=(s,)),
+            "receive": Thread(target=Receive, args=(s,)),
+        }
 
-    LaunchAndWaitThreads(threads)
-    
+        LaunchAndWaitThreads(threads)
+
 
 def Send(sock):
+    # TODO: Close socket when finish
     while True:
         msg = input("[you]> ")
         s.send(msg)
 
+        if msg == ".quit":  break
+
+    s.close()
+
 
 def Receive(sock):
     while True:
-        print("[peer]> {}".format(s.recv(1024)))
+        msg = s.recv(1024)
+        print("[peer]> {}".format(msg))
+
+        if msg == ".quit":  break;
+
+    s.close()
 
 
 def StartPeerConnection(peerIP):

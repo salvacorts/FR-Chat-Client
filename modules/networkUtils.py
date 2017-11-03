@@ -32,6 +32,7 @@ def GetLocalIP():
     s.close()
 
     return ip
+    # return "192.168.56.1"
 
 
 def LaunchAndWaitThreads(threads):
@@ -60,7 +61,7 @@ def Listen(port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-    s.bind(("", port))
+    s.bind((GetLocalIP(), port))
     s.settimeout(5)
     s.listen(1)
     conn = None
@@ -74,7 +75,14 @@ def Listen(port):
             continue
 
     if conn != None:
+        print("[+] Connected to peer")
         KEEP_TRYING_CONN = False
+
+        # TODO: AQUI DEBE IR El intercambio de claves
+        # simKeyCiphered = s.recv(1024)
+        # pubKey, privKey = GetKeys()
+        # simKey = DecryptAsimetric(simKeyCiphered, PrivKey)
+        # NOTE: Pasar simKey a Send() y Receive() como argumento en las hebras
         threads = {
             "send": Thread(target=Send, args=(s,)),
             "receive": Thread(target=Receive, args=(s,)),
@@ -101,7 +109,7 @@ def Connect(peerAddr, peerPort, localPort):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-    s.bind(("", localPort))
+    s.bind((GetLocalIP(), localPort))
     success = False
 
     global KEEP_TRYING_CONN
@@ -116,6 +124,11 @@ def Connect(peerAddr, peerPort, localPort):
             continue
 
     if success:
+        # TODO: AQUI DEBE IR El intercambio de claves
+        # simKey = GenRandKey()
+        # msgExchange = EncryptAsimetric(simKey, peerPubKey)
+        # s.sendall(msgExchange)
+        # NOTE: Pasar simKey a Send() y Receive() como argumento en las hebras
         threads = {
             "send": Thread(target=Send, args=(s,)),
             "receive": Thread(target=Receive, args=(s,)),

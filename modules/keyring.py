@@ -1,5 +1,6 @@
 from Crypto.Signature import PKCS1_PSS
 from Crypto.PublicKey import RSA
+from Crypto.Cipher import AES
 from Crypto.Hash import SHA
 import base64
 import os
@@ -40,3 +41,30 @@ def Sign(msg, privKey):
     signature = signer.sign(h)
 
     return base64.b64encode(signature)
+
+
+def EncryptAsimetric(msg, pubKey):
+    rsaKey = RSA.importKey(privKey)
+    encryptedMsg = rsaKey.encrypt(msg)
+
+    return encryptedMsg
+
+
+def DecryptAsimetric(msg, privKey):
+    rsaKey = RSA.importKey(privKey);
+    plainText = rsaKey.decrypt(msg)
+
+    return plainText
+
+def EncryptSimetric(msg, key):
+    cif = AES.new(key, 16)  # Use AES-128 with key
+    encryptedMsg = cif.encrypt(msg)
+
+    return encryptedMsg
+
+
+def DecryptSimetric(msg, key):
+    cif = AES.new(key, 16)  # Use AES-128 with key
+    plainText = cif.decrypt(msg)
+
+    return plainText

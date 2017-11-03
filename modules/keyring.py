@@ -2,11 +2,9 @@ from Crypto.Signature import PKCS1_PSS
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA
+from modules.constants import *
 import base64
 import os
-
-PUBLIC_FILE = "keys/public.key"
-PRIVATE_FILE = "keys/private.key"
 
 def ResetKeys():
     """Generate RSA Public and Private keys.
@@ -14,8 +12,12 @@ def ResetKeys():
     Generate public and private keys and write them to public.key
     and private.key files.
     """
-    private = RSA.generate(1024)
+    private = RSA.generate(2048)
     public = private.publickey()
+
+    keysPath = "/".join(PUBLIC_FILE.split("/")[0:-1])
+
+    if not os.path.exists(keysPath): os.makedirs(keysPath)
 
     pubFile = open(PUBLIC_FILE, "wb")
     privFile = open(PRIVATE_FILE, "wb")

@@ -32,8 +32,6 @@ def GetLocalIP():
     s.close()
 
     return ip
-    # return "192.168.56.1"
-
 
 def LaunchAndWaitThreads(threads):
     """Launch and wait for given threads to finish.
@@ -46,7 +44,6 @@ def LaunchAndWaitThreads(threads):
             threads[threadKey].join(1)
 
 
-# Print Incomming messages
 def Listen(port):
     """Listen for incomming Connections.
 
@@ -62,15 +59,16 @@ def Listen(port):
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     s.bind((GetLocalIP(), port))
-    s.settimeout(5)
+    s.settimeout(5) # NOTE: Creo que esto no haria falta
     s.listen(1)
     conn = None
 
     global KEEP_TRYING_CONN
     while conn == None or KEEP_TRYING_CONN:
         try:
-            print("[+] Listening incoming conections")
+            print("[*] Listening incoming conections")
             conn, addr = s.accept()
+            print("[+] Connection received")
         except:
             continue
 
@@ -84,14 +82,15 @@ def Listen(port):
         # simKey = DecryptAsimetric(simKeyCiphered, PrivKey)
         # NOTE: Pasar simKey a Send() y Receive() como argumento en las hebras
         threads = {
-            "send": Thread(target=Send, args=(s,)),
-            "receive": Thread(target=Receive, args=(s,)),
+            "send": Thread(target=Send, args=(conn,)),
+            "receive": Thread(target=Receive, args=(conn,)),
         }
 
         LaunchAndWaitThreads(threads)
 
+    s.close()
 
-# Send messages
+
 def Connect(peerAddr, peerPort, localPort):
     """Try to connect to remote host.
 
@@ -115,8 +114,9 @@ def Connect(peerAddr, peerPort, localPort):
     global KEEP_TRYING_CONN
     while KEEP_TRYING_CONN:
         try:
+            print("[*] Connection to peer")
             s.connect(peerAddr, peerPort)
-            print("[+] Connected to peer")
+            print("[+] Connected!pyhton")
             KEEP_TRYING_CONN = False
             success = True
             break;
@@ -136,6 +136,8 @@ def Connect(peerAddr, peerPort, localPort):
 
         LaunchAndWaitThreads(threads)
 
+    s.close()
+
 
 def Send(sock):
     """Send messagges to socket from user input.
@@ -147,7 +149,7 @@ def Send(sock):
     """
     while True:
         msg = input("[you]> ")
-        s.send(msg)
+        s.send(msg.encode("utf-8"))
 
         if msg == ".quit":  break
 
@@ -163,7 +165,7 @@ def Receive(sock):
         sock: Socket to receive messages from.
     """
     while True:
-        msg = s.recv(1024)
+        msg = s.recv(1024).decode("utf-8")
         print("[peer]> {}".format(msg))
 
         if msg == ".quit":  break;

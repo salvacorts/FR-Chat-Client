@@ -31,8 +31,7 @@ def GetLocalIP():
     ip = s.getsockname()[0]
     s.close()
 
-    # return ip
-    return "192.168.56.1"
+    return ip
 
 
 def LaunchAndWaitThreads(threads):

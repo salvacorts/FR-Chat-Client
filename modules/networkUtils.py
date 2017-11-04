@@ -104,7 +104,6 @@ def Listen(port, peerPubKey):
         LaunchAndWaitThreads(threads)
 
     s.close()
-    print("bye bye listen")
 
 
 def Connect(peerAddr, peerPort, localPort, peerPubKey):
@@ -182,6 +181,7 @@ def Send(sock, peerPubKey):
     mutexKeys.release()
 
     while True:
+        print(SIMETRIC_KEY)
         msgPlain = input("[you]> ")
         msgEnc = keyring.EncryptSimetric(msgPlain, SIMETRIC_KEY)
         sock.send(msgEnc)
@@ -212,6 +212,7 @@ def Receive(sock):
     mutexKeys.release()
 
     while True:
+        print(SIMETRIC_KEY)
         msgEnc = sock.recv(1024)
         msgPlain = keyring.DecryptSimetric(msgEnc, SIMETRIC_KEY)
         print("[peer]> {}".format(msgPlain))

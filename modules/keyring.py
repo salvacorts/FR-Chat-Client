@@ -3,6 +3,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA
 import modules.constants as const
+import random
 import base64
 import os
 
@@ -147,3 +148,10 @@ def DecryptSimetric(msg, key):
     plainText = cif.decrypt(msg)
 
     return plainText
+
+
+def GenRandKey():
+    values = "abcdefghijklmnopqrstuvwxyz0123456789"
+    key = "".join((random.choice(values)) for _ in range(32))
+
+    return key

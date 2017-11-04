@@ -26,8 +26,8 @@ def UpdateUserInfo(name, t=3):
         print("[!] Usurio desconocido")
     except exceptions.InvalidCredentials:
         print("[!] Credenciales invalidas")
-    except:
-        print("[!] Error desconocido... Intentando nuevamente")
+    except Exception as e:
+        print("[!] Error: {}".format(e.message))
 
         if t >= 0:
             UpdateUserInfo(name, --t)
@@ -61,7 +61,7 @@ def main():
     {2}
     """.format(PeerInfo["name"], PeerInfo["ip"], PeerInfo["pubKey"]))
 
-    network.StartPeerConnection(PeerInfo["ip"])
+    network.StartPeerConnection(PeerInfo["ip"], PeerInfo["pubKey"])
 
 
 if __name__ == '__main__':

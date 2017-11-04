@@ -35,8 +35,8 @@ def GetLocalIP():
     ip = s.getsockname()[0]
     s.close()
 
-    #return ip
-    return "192.168.56.1"
+    return ip
+    #return "192.168.56.1"
 
 
 def LaunchAndWaitThreads(threads):
@@ -70,7 +70,7 @@ def Listen(port):
     conn = None
 
     global KEEP_TRYING_CONN
-    while conn == None and KEEP_TRYING_CONN:
+    while conn is None and KEEP_TRYING_CONN:
         try:
             print("[*] Listening incoming conections")
             conn, addr = s.accept()
@@ -84,14 +84,14 @@ def Listen(port):
         print("[+] Connected to peer")
         KEEP_TRYING_CONN = False
 
-        # TODO: AQUI DEBE IR El intercambio de claves
-        # simKeyCiphered = s.recv(1024)
-        # pubKey, privKey = GetKeys()
-        # simKey = DecryptAsimetric(simKeyCiphered, PrivKey)
-        # NOTE: Pasar simKey a Send() y Receive() como argumento en las hebras
+        # (Receive key) Simetric key exchange with asimetric encryption
+        simKeyCiphered = s.recv(1024).decode("utf-8")
+        pubKey, privKey = keyring.GetKeys()
+        simKey = keyring.DecryptAsimetric(simKeyCiphered, privKey)
+
         threads = {
-            "send": Thread(target=Send, args=(conn,)),
-            "receive": Thread(target=Receive, args=(conn,)),
+            "send": Thread(target=Send, args=(conn, simKey,)),
+            "receive": Thread(target=Receive, args=(conn, simKey)),
         }
 
         LaunchAndWaitThreads(threads)
@@ -99,7 +99,7 @@ def Listen(port):
     s.close()
 
 
-def Connect(peerAddr, peerPort, localPort):
+def Connect(peerAddr, peerPort, localPort, peerPubKey):
     """Try to connect to remote host.
 
     Bin a socket to localhost and incoming port.
@@ -135,14 +135,14 @@ def Connect(peerAddr, peerPort, localPort):
             print("ERROR: {0}".format(e.message))
 
     if success:
-        # TODO: AQUI DEBE IR El intercambio de claves
-        # simKey = GenRandKey()
-        # msgExchange = EncryptAsimetric(simKey, peerPubKey)
-        # s.sendall(msgExchange)
-        # NOTE: Pasar simKey a Send() y Receive() como argumento en las hebras
+        # (Send key) Simetric key exchange with asimetric encryption
+        simKey = keyring.GenRandKey()
+        simKeyEncrypted = keyring.EncryptAsimetric(simKey, peerPubKey)
+        s.sendall(simKeyEncrypted)
+
         threads = {
-            "send": Thread(target=Send, args=(s,)),
-            "receive": Thread(target=Receive, args=(s,)),
+            "send": Thread(target=Send, args=(s, simKey,)),
+            "receive": Thread(target=Receive, args=(s, simKey,)),
         }
 
         LaunchAndWaitThreads(threads)
@@ -150,7 +150,7 @@ def Connect(peerAddr, peerPort, localPort):
     s.close()
 
 
-def Send(sock):
+def Send(sock, simKey):
     """Send messagges to socket from user input.
 
     It will send user input until ".quit" is written
@@ -159,15 +159,17 @@ def Send(sock):
         sock: Socket to send messages to.
     """
     while True:
-        msg = input("[you]> ")
+        msgPlain = input("[you]> ")
+        msgEnc = kering.EncryptSimetric(msgPlain, simKey)
         sock.send(msg.encode("utf-8"))
 
-        if msg == ".quit":  break
+        if msg == ".quit":
+            break
 
     sock.close()
 
 
-def Receive(sock):
+def Receive(sock, simKey):
     """Receive messages from socket and print them.
 
     It will be receiving messages until a ".quit" is received
@@ -176,15 +178,16 @@ def Receive(sock):
         sock: Socket to receive messages from.
     """
     while True:
-        msg = sock.recv(1024).decode("utf-8")
-        print("[peer]> {}".format(msg))
+        msgEnc = sock.recv(1024).decode("utf-8")
+        msgPlain = keyring.DecryptSimetric(msgEnc, simKey)
+        print("[peer]> {}".format(msgPlain))
 
         if msg == ".quit":  break;
 
     sock.close()
 
 
-def StartPeerConnection(peerIP):
+def StartPeerConnection(peerIP, peerPubKey):
     """Start chat connection with peer.
 
     It will use TCP Hole Punching Technique
@@ -194,7 +197,7 @@ def StartPeerConnection(peerIP):
     """
     threads = {
         "local-listen": Thread(target=Listen, args=(const.LISTEN_PORT,)),
-        "peer-conn": Thread(target=Connect, args=(peerIP, const.PEER_PORT, const.LISTEN_PORT,)),
+        "peer-conn": Thread(target=Connect, args=(peerIP, const.PEER_PORT, const.LISTEN_PORT, peerPubKey)),
     }
 
     LaunchAndWaitThreads(threads)

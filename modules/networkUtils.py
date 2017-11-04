@@ -35,8 +35,8 @@ def GetLocalIP():
     ip = s.getsockname()[0]
     s.close()
 
-    return ip
-    #return "192.168.1.46"
+    #return ip
+    return "192.168.56.1"
 
 
 def LaunchAndWaitThreads(threads):
@@ -80,9 +80,7 @@ def Listen(port):
         except Exception as e:
             print("ERROR: {0}".format(e.message))
 
-
-
-    if conn is None:
+    if conn is not None:
         print("[+] Connected to peer")
         KEEP_TRYING_CONN = False
 

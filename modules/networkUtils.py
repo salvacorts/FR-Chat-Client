@@ -1,12 +1,14 @@
 import modules.keyring as keyring
 import modules.constants as const
 from threading import Thread
+from threading import Lock
 import requests
 import socket
 import time
 
 
 KEEP_TRYING_CONN = True
+mutex = Lock()
 
 
 def GetPublicIP():
@@ -38,6 +40,7 @@ def GetLocalIP():
     # return ip
     return "192.168.56.1"
 
+
 def LaunchAndWaitThreads(threads):
     """Launch and wait for given threads to finish.
     """
@@ -67,21 +70,27 @@ def Listen(port):
     s.settimeout(5)  # Avoid high CPU usage
     s.listen(1)
     conn = None
+    success = False
 
+    global mutex
     global KEEP_TRYING_CONN
     while conn is None and KEEP_TRYING_CONN:
         try:
             print("[*] Listening incoming conections")
             conn, addr = s.accept()
-            print("[+] Connection received")
         except socket.timeout:
             continue
         except Exception as e:
             print("ERROR: {0}".format(e.message))
+        finally:
+            mutex.acquire()
+            if conn is not None and KEEP_TRYING_CONN:
+                KEEP_TRYING_CONN = False
+                success = True
+            mutex.release()
 
-    if conn is not None:
-        print("[+] Connected to peer")
-        KEEP_TRYING_CONN = False
+    if success:
+        print("[+] Connection received")
 
         # (Receive key) Simetric key exchange with asimetric encryption
         simKeyCiphered = s.recv(1024).decode("utf-8")
@@ -116,6 +125,7 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     s.bind((GetLocalIP(), localPort))
+    connected = False
     success = False
 
     global KEEP_TRYING_CONN
@@ -123,7 +133,6 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
         try:
             print("[*] Connecting to peer")
             s.connect((peerAddr, peerPort))
-            print("[+] Connected!")
             KEEP_TRYING_CONN = False
             success = True
             break
@@ -132,8 +141,16 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
             continue
         except Exception as e:
             print("ERROR: {0}".format(e.message))
+        finally:
+            mutex.acquire()
+            if success and KEEP_TRYING_CONN:
+                KEEP_TRYING_CONN = False
+                success = True
+            mutex.release()
 
     if success:
+        print("[+] Connected!")
+
         # (Send key) Simetric key exchange with asimetric encryption
         simKey = keyring.GenRandKey()
         simKeyEncrypted = keyring.EncryptAsimetric(simKey, peerPubKey)

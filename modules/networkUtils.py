@@ -8,7 +8,9 @@ import time
 
 
 KEEP_TRYING_CONN = True
-mutex = Lock()
+SIMETRIC_KEY = None
+mutexListen = Lock()
+mutexKeys = Lock()
 
 
 def GetPublicIP():
@@ -52,7 +54,7 @@ def LaunchAndWaitThreads(threads):
             threads[threadKey].join(1)
 
 
-def Listen(port):
+def Listen(port, peerPubKey):
     """Listen for incomming Connections.
 
     Bin a socket to localhost and incoming port.
@@ -72,8 +74,9 @@ def Listen(port):
     conn = None
     success = False
 
-    global mutex
     global KEEP_TRYING_CONN
+    global mutexListen
+
     while conn is None and KEEP_TRYING_CONN:
         try:
             print("[*] Listening incoming conections")
@@ -83,28 +86,25 @@ def Listen(port):
         except Exception as e:
             print("ERROR: {0}".format(e.message))
         finally:
-            mutex.acquire()
+            mutexListen.acquire()
             if conn is not None and KEEP_TRYING_CONN:
                 KEEP_TRYING_CONN = False
                 success = True
-            mutex.release()
+            mutexListen.release()
 
     if success:
         print("[+] Connection received")
-
-        # (Receive key) Simetric key exchange with asimetric encryption
-        simKeyCiphered = s.recv(1024).decode("utf-8")
-        pubKey, privKey = keyring.GetKeys()
-        simKey = keyring.DecryptAsimetric(simKeyCiphered, privKey)
+        s.settimeout(0)
 
         threads = {
-            "send": Thread(target=Send, args=(conn, simKey,)),
-            "receive": Thread(target=Receive, args=(conn, simKey)),
+            "send": Thread(target=Send, args=(conn, peerPubKey,)),
+            "receive": Thread(target=Receive, args=(conn,)),
         }
 
         LaunchAndWaitThreads(threads)
 
     s.close()
+    print("bye bye listen")
 
 
 def Connect(peerAddr, peerPort, localPort, peerPubKey):
@@ -125,10 +125,11 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     s.bind((GetLocalIP(), localPort))
-    connected = False
     success = False
 
     global KEEP_TRYING_CONN
+    global mutexListen
+
     while KEEP_TRYING_CONN:
         try:
             print("[*] Connecting to peer")
@@ -142,23 +143,18 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
         except Exception as e:
             print("ERROR: {0}".format(e.message))
         finally:
-            mutex.acquire()
+            mutexListen.acquire()
             if success and KEEP_TRYING_CONN:
                 KEEP_TRYING_CONN = False
                 success = True
-            mutex.release()
+            mutexListen.release()
 
     if success:
         print("[+] Connected!")
 
-        # (Send key) Simetric key exchange with asimetric encryption
-        simKey = keyring.GenRandKey()
-        simKeyEncrypted = keyring.EncryptAsimetric(simKey, peerPubKey)
-        s.sendall(simKeyEncrypted)
-
         threads = {
-            "send": Thread(target=Send, args=(s, simKey,)),
-            "receive": Thread(target=Receive, args=(s, simKey,)),
+            "send": Thread(target=Send, args=(s, peerPubKey,)),
+            "receive": Thread(target=Receive, args=(s,)),
         }
 
         LaunchAndWaitThreads(threads)
@@ -166,7 +162,7 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
     s.close()
 
 
-def Send(sock, simKey):
+def Send(sock, peerPubKey):
     """Send messagges to socket from user input.
 
     It will send user input until ".quit" is written
@@ -174,9 +170,20 @@ def Send(sock, simKey):
     Args:
         sock: Socket to send messages to.
     """
+    global SIMETRIC_KEY
+    global mutexKeys
+
+    # (Send key) Simetric key exchange with asimetric encryption
+    mutexKeys.acquire()
+    if SIMETRIC_KEY is None:
+        SIMETRIC_KEY = keyring.GenRandKey()
+        simKeyEncrypted = keyring.EncryptAsimetric(SIMETRIC_KEY, peerPubKey)
+        sock.sendall(simKeyEncrypted)
+    mutexKeys.release()
+
     while True:
         msgPlain = input("[you]> ")
-        msgEnc = keyring.EncryptSimetric(msgPlain, simKey)
+        msgEnc = keyring.EncryptSimetric(msgPlain, SIMETRIC_KEY)
         sock.send(msgEnc)
 
         if msgPlain == ".quit":
@@ -185,7 +192,7 @@ def Send(sock, simKey):
     sock.close()
 
 
-def Receive(sock, simKey):
+def Receive(sock):
     """Receive messages from socket and print them.
 
     It will be receiving messages until a ".quit" is received
@@ -193,9 +200,20 @@ def Receive(sock, simKey):
     Args:
         sock: Socket to receive messages from.
     """
+    global SIMETRIC_KEY
+    global mutexKeys
+
+    # (Receive key) Simetric key exchange with asimetric encryption
+    simKeyCiphered = sock.recv(1024)
+    pubKey, privKey = keyring.GetKeys()
+    mutexKeys.acquire()
+    if SIMETRIC_KEY is None:
+        SIMETRIC_KEY = keyring.DecryptAsimetric(simKeyCiphered, privKey)
+    mutexKeys.release()
+
     while True:
         msgEnc = sock.recv(1024)
-        msgPlain = keyring.DecryptSimetric(msgEnc, simKey)
+        msgPlain = keyring.DecryptSimetric(msgEnc, SIMETRIC_KEY)
         print("[peer]> {}".format(msgPlain))
 
         if msgPlain == ".quit":
@@ -212,8 +230,9 @@ def StartPeerConnection(peerIP, peerPubKey):
     Args:
         peerIP: Remote Peer IP address.
     """
+
     threads = {
-        "local-listen": Thread(target=Listen, args=(const.LISTEN_PORT,)),
+        "local-listen": Thread(target=Listen, args=(const.LISTEN_PORT, peerPubKey)),
         "peer-conn": Thread(target=Connect, args=(peerIP, const.PEER_PORT, const.LISTEN_PORT, peerPubKey)),
     }
 

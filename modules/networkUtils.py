@@ -75,8 +75,8 @@ def Listen(port):
     while conn is None and KEEP_TRYING_CONN:
         try:
             print("[*] Listening incoming conections")
-            MUTEX.acquire()
             conn, addr = s.accept()
+            MUTEX.acquire()
             KEEP_TRYING_CONN = False
             MUTEX.release()
         except socket.timeout:
@@ -128,9 +128,9 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
     while KEEP_TRYING_CONN:
         try:
             print("[*] Connecting to peer")
-            MUTEX.acquire()
             s.connect((peerAddr, peerPort))
             success = True
+            MUTEX.acquire()
             KEEP_TRYING_CONN = False
             MUTEX.release()
             print("[+] Connected!")

@@ -204,19 +204,26 @@ def Receive(sock):
     global mutexKeys
 
     # (Receive key) Simetric key exchange with asimetric encryption
+    sock.settimeout(5.0)
+    reTry = True
 
-    mutexKeys.acquire()
-    if SIMETRIC_KEY is None:
-        simKeyCiphered = sock.recv(1024)
-        pubKey, privKey = keyring.GetKeys()
-        SIMETRIC_KEY = keyring.DecryptAsimetric(simKeyCiphered, privKey)
-    mutexKeys.release()
+    while reTry:
+        mutexKeys.acquire()
+        if SIMETRIC_KEY is None:
+            try:
+                simKeyCiphered = sock.recv(1024)
+                pubKey, privKey = keyring.GetKeys()
+                SIMETRIC_KEY = keyring.DecryptAsimetric(simKeyCiphered, privKey)
+                reTry = False
+            finally:
+                mutexKeys.release()
 
+    sock.settimeout(None)
     while True:
-        #print(SIMETRIC_KEY)
+        # print(SIMETRIC_KEY)
         msgEnc = sock.recv(1024)
         msgPlain = keyring.DecryptSimetric(msgEnc, SIMETRIC_KEY)
-        print("[peer]> {}".format(msgPlain.decode("utf-8")))
+        print("[peer]> {}".format(msgPlain))
 
         if msgPlain == ".quit":
             break

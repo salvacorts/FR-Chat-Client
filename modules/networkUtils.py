@@ -192,7 +192,7 @@ def Receive(sock):
     while True:
         msgEnc = sock.recv(1024)
         msgPlain = keyring.DecryptAsimetric(msgEnc, privKey)
-        print("[peer]> {}".format(msgPlain))
+        print("[peer]> {}".format(msgPlain.decode()))
 
         if msgPlain == ".quit":
             break

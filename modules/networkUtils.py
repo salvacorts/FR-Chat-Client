@@ -181,7 +181,7 @@ def Send(sock, peerPubKey):
     mutexKeys.release()
 
     while True:
-        print(SIMETRIC_KEY)
+        #print(SIMETRIC_KEY)
         msgPlain = input("[you]> ")
         msgEnc = keyring.EncryptSimetric(msgPlain, SIMETRIC_KEY)
         sock.send(msgEnc)
@@ -204,18 +204,19 @@ def Receive(sock):
     global mutexKeys
 
     # (Receive key) Simetric key exchange with asimetric encryption
-    simKeyCiphered = sock.recv(1024)
-    pubKey, privKey = keyring.GetKeys()
+
     mutexKeys.acquire()
     if SIMETRIC_KEY is None:
+        simKeyCiphered = sock.recv(1024)
+        pubKey, privKey = keyring.GetKeys()
         SIMETRIC_KEY = keyring.DecryptAsimetric(simKeyCiphered, privKey)
     mutexKeys.release()
 
     while True:
-        print(SIMETRIC_KEY)
+        #print(SIMETRIC_KEY)
         msgEnc = sock.recv(1024)
         msgPlain = keyring.DecryptSimetric(msgEnc, SIMETRIC_KEY)
-        print("[peer]> {}".format(msgPlain))
+        print("[peer]> {}".format(msgPlain.decode("utf-8")))
 
         if msgPlain == ".quit":
             break

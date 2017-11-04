@@ -35,8 +35,8 @@ def GetLocalIP():
     ip = s.getsockname()[0]
     s.close()
 
-    return ip
-    #return "192.168.56.1"
+    #return ip
+    return "192.168.56.1"
 
 
 def LaunchAndWaitThreads(threads):
@@ -160,10 +160,10 @@ def Send(sock, simKey):
     """
     while True:
         msgPlain = input("[you]> ")
-        msgEnc = kering.EncryptSimetric(msgPlain, simKey)
-        sock.send(msg.encode("utf-8"))
+        msgEnc = keyring.EncryptSimetric(msgPlain, simKey)
+        sock.send(msgEnc)
 
-        if msg == ".quit":
+        if msgPlain == ".quit":
             break
 
     sock.close()
@@ -182,7 +182,8 @@ def Receive(sock, simKey):
         msgPlain = keyring.DecryptSimetric(msgEnc, simKey)
         print("[peer]> {}".format(msgPlain))
 
-        if msg == ".quit":  break;
+        if msgPlain == ".quit":
+            break
 
     sock.close()
 

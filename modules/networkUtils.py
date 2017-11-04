@@ -169,21 +169,21 @@ def Send(sock, peerPubKey):
     Args:
         sock: Socket to send messages to.
     """
-    global SIMETRIC_KEY
-    global mutexKeys
-
-    # (Send key) Simetric key exchange with asimetric encryption
-    mutexKeys.acquire()
-    if SIMETRIC_KEY is None:
-        SIMETRIC_KEY = keyring.GenRandKey()
-        simKeyEncrypted = keyring.EncryptAsimetric(SIMETRIC_KEY, peerPubKey)
-        sock.sendall(simKeyEncrypted)
-    mutexKeys.release()
+    # global SIMETRIC_KEY
+    # global mutexKeys
+    #
+    # # (Send key) Simetric key exchange with asimetric encryption
+    # mutexKeys.acquire()
+    # if SIMETRIC_KEY is None:
+    #     SIMETRIC_KEY = keyring.GenRandKey()
+    #     simKeyEncrypted = keyring.EncryptAsimetric(SIMETRIC_KEY, peerPubKey)
+    #     sock.sendall(simKeyEncrypted)
+    # mutexKeys.release()
 
     while True:
         print(SIMETRIC_KEY)
         msgPlain = input("[you]> ")
-        msgEnc = keyring.EncryptSimetric(msgPlain, SIMETRIC_KEY)
+        msgEnc = keyring.EncryptAsimetric(msgPlain, peerPubKey)
         sock.send(msgEnc)
 
         if msgPlain == ".quit":
@@ -200,31 +200,31 @@ def Receive(sock):
     Args:
         sock: Socket to receive messages from.
     """
-    global SIMETRIC_KEY
-    global mutexKeys
+    # global SIMETRIC_KEY
+    # global mutexKeys
+    #
+    # # (Receive key) Simetric key exchange with asimetric encryption
+    # sock.settimeout(5.0)
+    # reTry = True
+    #
+    # while reTry:
+    #     mutexKeys.acquire()
+    #     if SIMETRIC_KEY is None:
+    #         try:
+    #             simKeyCiphered = sock.recv(1024)
+    #             pubKey, privKey = keyring.GetKeys()
+    #             SIMETRIC_KEY = keyring.DecryptAsimetric(simKeyCiphered, privKey)
+    #             reTry = False
+    #         except socket.timeout:
+    #             pass
+    #         finally:
+    #             mutexKeys.release()
+    pubKey, privKey = keyring.GetKeys()
 
-    # (Receive key) Simetric key exchange with asimetric encryption
-    sock.settimeout(5.0)
-    reTry = True
-
-    while reTry:
-        mutexKeys.acquire()
-        if SIMETRIC_KEY is None:
-            try:
-                simKeyCiphered = sock.recv(1024)
-                pubKey, privKey = keyring.GetKeys()
-                SIMETRIC_KEY = keyring.DecryptAsimetric(simKeyCiphered, privKey)
-                reTry = False
-            except socket.timeout:
-                pass
-            finally:
-                mutexKeys.release()
-
-    sock.settimeout(None)
     while True:
         print(SIMETRIC_KEY)
         msgEnc = sock.recv(1024)
-        msgPlain = keyring.DecryptSimetric(msgEnc, SIMETRIC_KEY)
+        msgPlain = keyring.DecryptAsimetric(msgEnc, privKey)
         print("[peer]> {}".format(msgPlain))
 
         if msgPlain == ".quit":

@@ -91,7 +91,7 @@ def EncryptAsimetric(msg, pubKey):
         A string containing encrypted message
     """
     rsaKey = RSA.importKey(pubKey)
-    encryptedMsg = rsaKey.encrypt(msg.encode("utf-8"), 32)[0]
+    encryptedMsg = rsaKey.encrypt(msg)
 
     return encryptedMsg
 
@@ -126,8 +126,7 @@ def EncryptSimetric(msg, key):
     Returns:
         A string containing encrypted message
     """
-    iv = "a" * 16
-    cif = AES.new(key, AES.MODE_CFB, iv)  # Use AES-128 with key
+    cif = AES.new(key, 16)  # Use AES-128 with key
     encryptedMsg = cif.encrypt(msg)
 
     return encryptedMsg
@@ -145,8 +144,7 @@ def DecryptSimetric(msg, key):
     Returns:
         A string containing plaintext decrypted message
     """
-    iv = "a" * 16
-    cif = AES.new(key, AES.MODE_CFB, iv)  # Use AES-128 with key
+    cif = AES.new(key, 16)  # Use AES-128 with key
     plainText = cif.decrypt(msg)
 
     return plainText
@@ -154,6 +152,6 @@ def DecryptSimetric(msg, key):
 
 def GenRandKey():
     values = "abcdefghijklmnopqrstuvwxyz0123456789"
-    key = "".join((random.choice(values)) for _ in range(16))  # 16 because os AES
+    key = "".join((random.choice(values)) for _ in range(32))
 
     return key

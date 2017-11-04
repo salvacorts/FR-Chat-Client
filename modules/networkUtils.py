@@ -36,6 +36,8 @@ def GetLocalIP():
     s.close()
 
     return ip
+    #return "192.168.1.46"
+
 
 def LaunchAndWaitThreads(threads):
     """Launch and wait for given threads to finish.
@@ -68,13 +70,17 @@ def Listen(port):
     conn = None
 
     global KEEP_TRYING_CONN
-    while conn is None and KEEP_TRYING_CONN:
+    while conn == None and KEEP_TRYING_CONN:
         try:
             print("[*] Listening incoming conections")
             conn, addr = s.accept()
             print("[+] Connection received")
-        except:
+        except socket.timeout:
             continue
+        except Exception as e:
+            print("ERROR: {0}".format(e.message))
+
+
 
     if conn is None:
         print("[+] Connected to peer")
@@ -119,15 +125,16 @@ def Connect(peerAddr, peerPort, localPort):
     while KEEP_TRYING_CONN:
         try:
             print("[*] Connecting to peer")
-            key
-            s.connect(peerAddr, peerPort)
+            s.connect((peerAddr, peerPort))
             print("[+] Connected!")
             KEEP_TRYING_CONN = False
             success = True
             break
-        except:
+        except socket.error:
             time.sleep(0.5)  # Avoid High CPU usage
             continue
+        except Exception as e:
+            print("ERROR: {0}".format(e.message))
 
     if success:
         # TODO: AQUI DEBE IR El intercambio de claves

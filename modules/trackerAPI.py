@@ -4,12 +4,13 @@ import modules.keyring as keyring
 import requests
 import json
 
+
 class TrackerAPI:
-    baseUrl="https://fr-ugr-rest.herokuapp.com"
-    urlAdd = baseUrl+"/users/add/"
-    urlGet = baseUrl+"/users/get/{0}"
-    urlUpdate = baseUrl+"/users/update/"
-    urlKey = baseUrl+"/key"
+    baseUrl = "https://fr-ugr-rest.herokuapp.com"
+    urlAdd = baseUrl + "/users/add/"
+    urlGet = baseUrl + "/users/get/{0}"
+    urlUpdate = baseUrl + "/users/update/"
+    urlKey = baseUrl + "/key"
 
     payloadAdd = {"name": None, "ip": None, "pubKey": None}
     payloadUpdate = {"name": None, "ip": None, "validationMSG": None}

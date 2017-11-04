@@ -2,9 +2,10 @@ from Crypto.Signature import PKCS1_PSS
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA
-from modules.constants import *
+import modules.constants as const
 import base64
 import os
+
 
 def ResetKeys():
     """Generate RSA Public and Private keys.
@@ -15,15 +16,17 @@ def ResetKeys():
     private = RSA.generate(2048)
     public = private.publickey()
 
-    keysPath = "/".join(PUBLIC_FILE.split("/")[0:-1])
+    keysPath = "/".join(const.PUBLIC_FILE.split("/")[0:-1])
 
-    if not os.path.exists(keysPath): os.makedirs(keysPath)
+    if not os.path.exists(keysPath):
+        os.makedirs(keysPath)
 
-    pubFile = open(PUBLIC_FILE, "wb")
-    privFile = open(PRIVATE_FILE, "wb")
+    pubFile = open(const.PUBLIC_FILE, "wb")
+    privFile = open(const.PRIVATE_FILE, "wb")
 
     pubFile.write(public.exportKey())
     privFile.write(private.exportKey())
+
 
 def GetKeys():
     """Returns RSA Public and Private keys.
@@ -37,16 +40,19 @@ def GetKeys():
         privateKey: String with RSA Private key
 
     """
-    if not os.path.exists(PUBLIC_FILE) or not os.path.exists(PRIVATE_FILE):
+    if not os.path.exists(const.PUBLIC_FILE) or not os.path.exists(const.PRIVATE_FILE):
         ResetKeys()
 
-    pubFile = open(PUBLIC_FILE, "r")
-    privFile = open(PRIVATE_FILE, "r")
+    # pubFile = open(const.PUBLIC_FILE, "r")
+    privFile = open(const.PRIVATE_FILE, "r")
 
     private = RSA.importKey(privFile.read())
     public = private.publickey()
 
-    return public.exportKey().decode("utf-8"), private.exportKey().decode("utf-8")
+    private = private.exportKey().decode("utf-8")
+    public = public.exportKey().decode("utf-8")
+
+    return public, private
 
 
 def Sign(msg, privKey):
@@ -83,7 +89,7 @@ def EncryptAsimetric(msg, pubKey):
     Returns:
         A string containing encrypted message
     """
-    rsaKey = RSA.importKey(privKey)
+    rsaKey = RSA.importKey(pubKey)
     encryptedMsg = rsaKey.encrypt(msg)
 
     return encryptedMsg
@@ -101,7 +107,7 @@ def DecryptAsimetric(msg, privKey):
     Returns:
         A string containing plaintext decrypted message
     """
-    rsaKey = RSA.importKey(privKey);
+    rsaKey = RSA.importKey(privKey)
     plainText = rsaKey.decrypt(msg)
 
     return plainText

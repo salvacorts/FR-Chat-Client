@@ -1,9 +1,13 @@
-from modules.constants import *
+import modules.keyring as keyring
+import modules.constants as const
 from threading import Thread
 import requests
 import socket
+import time
+
 
 KEEP_TRYING_CONN = True
+
 
 def GetPublicIP():
     """Give Public IP.
@@ -59,12 +63,12 @@ def Listen(port):
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     s.bind((GetLocalIP(), port))
-    s.settimeout(5) # NOTE: Creo que esto no haria falta
+    s.settimeout(5)  # Avoid high CPU usage
     s.listen(1)
     conn = None
 
     global KEEP_TRYING_CONN
-    while conn == None or KEEP_TRYING_CONN:
+    while conn is None and KEEP_TRYING_CONN:
         try:
             print("[*] Listening incoming conections")
             conn, addr = s.accept()
@@ -72,7 +76,7 @@ def Listen(port):
         except:
             continue
 
-    if conn != None:
+    if conn is None:
         print("[+] Connected to peer")
         KEEP_TRYING_CONN = False
 
@@ -114,13 +118,15 @@ def Connect(peerAddr, peerPort, localPort):
     global KEEP_TRYING_CONN
     while KEEP_TRYING_CONN:
         try:
-            print("[*] Connection to peer")
+            print("[*] Connecting to peer")
+            key
             s.connect(peerAddr, peerPort)
-            print("[+] Connected!pyhton")
+            print("[+] Connected!")
             KEEP_TRYING_CONN = False
             success = True
-            break;
+            break
         except:
+            time.sleep(0.5)  # Avoid High CPU usage
             continue
 
     if success:
@@ -149,11 +155,11 @@ def Send(sock):
     """
     while True:
         msg = input("[you]> ")
-        s.send(msg.encode("utf-8"))
+        sock.send(msg.encode("utf-8"))
 
         if msg == ".quit":  break
 
-    s.close()
+    sock.close()
 
 
 def Receive(sock):
@@ -165,12 +171,12 @@ def Receive(sock):
         sock: Socket to receive messages from.
     """
     while True:
-        msg = s.recv(1024).decode("utf-8")
+        msg = sock.recv(1024).decode("utf-8")
         print("[peer]> {}".format(msg))
 
         if msg == ".quit":  break;
 
-    s.close()
+    sock.close()
 
 
 def StartPeerConnection(peerIP):
@@ -182,8 +188,8 @@ def StartPeerConnection(peerIP):
         peerIP: Remote Peer IP address.
     """
     threads = {
-        "local-listen": Thread(target=Listen, args=(LISTEN_PORT,)),
-        "peer-conn": Thread(target=Connect, args=(peerIP, PEER_PORT, LISTEN_PORT)),
+        "local-listen": Thread(target=Listen, args=(const.LISTEN_PORT,)),
+        "peer-conn": Thread(target=Connect, args=(peerIP, const.PEER_PORT, const.LISTEN_PORT,)),
     }
 
     LaunchAndWaitThreads(threads)

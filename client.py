@@ -5,12 +5,13 @@ from modules.trackerAPI import TrackerAPI
 import modules.exceptions as exceptions
 import modules.networkUtils as network
 
+
 def UpdateUserInfo(name, t=3):
     info = TrackerAPI.GetUser(name)
     currentIP = network.GetLocalIP()
 
     try:
-        if info == None:
+        if info is None:
             TrackerAPI.AddUser(name)
             print("[*] Usuario Añadido")
         elif info["ip"] != currentIP:
@@ -18,7 +19,7 @@ def UpdateUserInfo(name, t=3):
             print("[*] Datos de usuario actualizados")
         else:
             print("[*] Los datos estan actualizados")
-            return info # NOTE: Para no volver a llamar al servidor
+            return info  # NOTE: Para no volver a llamar al servidor
     except exceptions.DuplicatedUser:
         print("[!] El usuario ya existe")
     except exceptions.UnknownUser:
@@ -27,8 +28,9 @@ def UpdateUserInfo(name, t=3):
         print("[!] Credenciales invalidas")
     except:
         print("[!] Error desconocido... Intentando nuevamente")
-        if t >= 0: UpdateUserInfo(name, --t)
 
+        if t >= 0:
+            UpdateUserInfo(name, --t)
 
     return TrackerAPI.GetUser(name)
 
@@ -39,13 +41,11 @@ def main():
 
     UserInfo = UpdateUserInfo(userName)
 
-
     PeerInfo = TrackerAPI.GetUser(peerName)
 
-    if PeerInfo == None:
+    if PeerInfo is None:
         print("[!] El nombre de tu amigo no existe")
         exit(1)
-
 
     print("""
     Name: {0}

@@ -7,7 +7,6 @@ import time
 
 
 KEEP_TRYING_CONN = True
-MUTEX = Thread.Lock()
 
 
 def GetPublicIP():
@@ -70,15 +69,12 @@ def Listen(port):
     s.listen(1)
     conn = None
 
-    global MUTEX
     global KEEP_TRYING_CONN
     while conn is None and KEEP_TRYING_CONN:
         try:
             print("[*] Listening incoming conections")
             conn, addr = s.accept()
-            MUTEX.acquire()
-            KEEP_TRYING_CONN = False
-            MUTEX.release()
+            print("[+] Connection received")
         except socket.timeout:
             continue
         except Exception as e:
@@ -86,12 +82,12 @@ def Listen(port):
 
     if conn is not None:
         print("[+] Connected to peer")
+        KEEP_TRYING_CONN = False
 
         # (Receive key) Simetric key exchange with asimetric encryption
         simKeyCiphered = s.recv(1024).decode("utf-8")
         pubKey, privKey = keyring.GetKeys()
         simKey = keyring.DecryptAsimetric(simKeyCiphered, privKey)
-        print("[*] Key exchange successfull")
 
         threads = {
             "send": Thread(target=Send, args=(conn, simKey,)),
@@ -123,17 +119,15 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
     s.bind((GetLocalIP(), localPort))
     success = False
 
-    global MUTEX
     global KEEP_TRYING_CONN
     while KEEP_TRYING_CONN:
         try:
             print("[*] Connecting to peer")
             s.connect((peerAddr, peerPort))
-            success = True
-            MUTEX.acquire()
-            KEEP_TRYING_CONN = False
-            MUTEX.release()
             print("[+] Connected!")
+            KEEP_TRYING_CONN = False
+            success = True
+            break
         except socket.error:
             time.sleep(0.5)  # Avoid High CPU usage
             continue
@@ -145,7 +139,6 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
         simKey = keyring.GenRandKey()
         simKeyEncrypted = keyring.EncryptAsimetric(simKey, peerPubKey)
         s.sendall(simKeyEncrypted)
-        print("[*] Key exchange successfull")
 
         threads = {
             "send": Thread(target=Send, args=(s, simKey,)),
@@ -185,7 +178,7 @@ def Receive(sock, simKey):
         sock: Socket to receive messages from.
     """
     while True:
-        msgEnc = sock.recv(1024)  # We don't decode, are bytes
+        msgEnc = sock.recv(1024).decode("utf-8")
         msgPlain = keyring.DecryptSimetric(msgEnc, simKey)
         print("[peer]> {}".format(msgPlain))
 

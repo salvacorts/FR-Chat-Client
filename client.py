@@ -8,7 +8,7 @@ import modules.networkUtils as network
 
 def UpdateUserInfo(name, t=3):
     info = TrackerAPI.GetUser(name)
-    currentIP = network.GetLocalIP()
+    currentIP = network.GetPublicIP()
 
     try:
         if info is None:

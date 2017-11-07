@@ -2,9 +2,12 @@ import modules.keyring as keyring
 import modules.constants as const
 from threading import Thread
 from threading import Lock
+import miniupnpc
 import requests
 import socket
 import time
+
+# TODO(Salva): Poner hebra a hacer UPnP
 
 
 KEEP_TRYING_CONN = True
@@ -37,8 +40,7 @@ def GetLocalIP():
     ip = s.getsockname()[0]
     s.close()
 
-    # return ip
-    return "192.168.56.1"
+    return ip
 
 
 def LaunchAndWaitThreads(threads):
@@ -127,9 +129,9 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
     global KEEP_TRYING_CONN
     global mutexListen
 
+    print("[*] Connecting to peer")
     while KEEP_TRYING_CONN:
         try:
-            print("[*] Connecting to peer")
             s.connect((peerAddr, peerPort))
             KEEP_TRYING_CONN = False
             success = True
@@ -200,6 +202,25 @@ def Receive(sock):
     sock.close()
 
 
+def LaunchUPnP(port, remoteIP):
+    """Open ports on router to receive connections.
+
+    It will launch IGD service (based on UPnP).
+    http://miniupnp.free.fr/nat-pmp.html
+
+    Args:
+        port: Port to open on router and to listen on localhost
+        peerIP: Peer IP address to accept connections from
+    """
+    upnp = miniupnpc.UPnP()
+    upnp.discoverdelay = 10
+    upnp.discover()
+    upnp.selectigd()  # Use IGD (Internet Gateway Device)
+
+    # Args: external_port, protocol, internal_host, internal_port, description, remote_host
+    upnp.addportmapping(port, "TCP", GetLocalIP(), port, "Chat P2P", remoteIP)
+
+
 def StartPeerConnection(peerIP, peerPubKey):
     """Start chat connection with peer.
 
@@ -208,6 +229,10 @@ def StartPeerConnection(peerIP, peerPubKey):
     Args:
         peerIP: Remote Peer IP address.
     """
+
+    # Start UPnP
+    LaunchUPnP(const.LISTEN_PORT, peerIP)
+    print("[*] UPnP Service launched")
 
     threads = {
         "local-listen": Thread(target=Listen, args=(const.LISTEN_PORT, peerPubKey)),

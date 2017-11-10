@@ -7,8 +7,6 @@ import requests
 import socket
 import time
 
-# TODO(Salva): Poner hebra a hacer UPnP
-
 
 KEEP_TRYING_CONN = True
 mutexListen = Lock()
@@ -221,7 +219,7 @@ def LaunchUPnP(port, remoteIP):
     upnp.addportmapping(port, "TCP", GetLocalIP(), port, "Chat P2P", remoteIP)
 
 
-def StartPeerConnection(peerIP, peerPubKey):
+def StartPeerConnection(peerIP, peerPort, peerPubKey):
     """Start chat connection with peer.
 
     It will use TCP Hole Punching Technique
@@ -236,7 +234,7 @@ def StartPeerConnection(peerIP, peerPubKey):
 
     threads = {
         "local-listen": Thread(target=Listen, args=(const.LISTEN_PORT, peerPubKey)),
-        "peer-conn": Thread(target=Connect, args=(peerIP, const.PEER_PORT, const.LISTEN_PORT, peerPubKey)),
+        "peer-conn": Thread(target=Connect, args=(peerIP, peerPort, const.LISTEN_PORT, peerPubKey)),
     }
 
     LaunchAndWaitThreads(threads)

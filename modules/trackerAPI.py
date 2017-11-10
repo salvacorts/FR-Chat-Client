@@ -1,5 +1,6 @@
 import modules.exceptions as exceptions
 import modules.networkUtils as network
+import modules.constants as const
 import modules.keyring as keyring
 import requests
 import json
@@ -12,8 +13,8 @@ class TrackerAPI:
     urlUpdate = baseUrl + "/users/update/"
     urlKey = baseUrl + "/key"
 
-    payloadAdd = {"name": None, "ip": None, "pubKey": None}
-    payloadUpdate = {"name": None, "ip": None, "validationMSG": None}
+    payloadAdd = {"name": None, "ip": None, "port": None, "pubKey": None}
+    payloadUpdate = {"name": None, "ip": None, "port": None, "validationMSG": None}
 
     @staticmethod
     def AddUser(name):
@@ -22,6 +23,7 @@ class TrackerAPI:
 
         TrackerAPI.payloadAdd["name"] = name
         TrackerAPI.payloadAdd["ip"] = ip
+        TrackerAPI.payloadAdd["port"] = const.LISTEN_PORT
         TrackerAPI.payloadAdd["pubKey"] = pubKey
 
         r = requests.post(TrackerAPI.urlAdd, data=TrackerAPI.payloadAdd)
@@ -46,6 +48,7 @@ class TrackerAPI:
 
         TrackerAPI.payloadUpdate["name"] = name
         TrackerAPI.payloadUpdate["ip"] = ip
+        TrackerAPI.payloadUpdate["port"] = const.LISTEN_PORT
         TrackerAPI.payloadUpdate["validationMSG"] = validationMSG
 
         r = requests.post(TrackerAPI.urlUpdate, TrackerAPI.payloadUpdate)

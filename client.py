@@ -50,18 +50,20 @@ def main():
     print("""
     Name: {0}
     IP: {1}
+    Port: {2}
     Public Key:
-    {2}
-    """.format(UserInfo["name"], UserInfo["ip"], UserInfo["pubKey"]))
+    {3}
+    """.format(UserInfo["name"], UserInfo["ip"], UserInfo["port"], UserInfo["pubKey"]))
 
     print("""\n\n
     Name: {0}
     IP: {1}
+    Port: {2}
     Public Key:
-    {2}
-    """.format(PeerInfo["name"], PeerInfo["ip"], PeerInfo["pubKey"]))
+    {3}
+    """.format(PeerInfo["name"], PeerInfo["ip"], PeerInfo["port"], PeerInfo["pubKey"]))
 
-    network.StartPeerConnection(PeerInfo["ip"], PeerInfo["pubKey"])
+    network.StartPeerConnection(PeerInfo["ip"], PeerInfo["port"], PeerInfo["pubKey"])
 
 
 if __name__ == '__main__':

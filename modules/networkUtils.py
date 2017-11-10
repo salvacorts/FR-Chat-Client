@@ -216,8 +216,12 @@ def LaunchUPnP(port, remoteIP):
     upnp.selectigd()  # Use IGD (Internet Gateway Device)
 
     # Args: external_port, protocol, internal_host, internal_port, description, remote_host
-    upnp.addportmapping(port, "TCP", GetLocalIP(), port, "Chat P2P", remoteIP)
-
+    try:
+        upnp.addportmapping(port, "TCP", GetLocalIP(), port, "Chat P2P", remoteIP)
+    except ConflictInMappingEntry:
+        print("[*] UPnP ya activado")
+    except Exception as e:
+        print("[!] {}".format(e.message))
 
 def StartPeerConnection(peerIP, peerPort, peerPubKey):
     """Start chat connection with peer.

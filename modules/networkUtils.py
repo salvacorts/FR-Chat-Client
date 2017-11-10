@@ -212,16 +212,17 @@ def LaunchUPnP(port, remoteIP):
     """
     upnp = miniupnpc.UPnP()
     upnp.discoverdelay = 10
-    upnp.discover()
-    upnp.selectigd()  # Use IGD (Internet Gateway Device)
 
-    # Args: external_port, protocol, internal_host, internal_port, description, remote_host
     try:
+        upnp.discover()
+        upnp.selectigd()  # Use IGD (Internet Gateway Device)
+        # Args: external_port, protocol, internal_host, internal_port, description, remote_host
         upnp.addportmapping(port, "TCP", GetLocalIP(), port, "Chat P2P", remoteIP)
     except ConflictInMappingEntry:
         print("[*] UPnP ya activado")
     except Exception as e:
         print("[!] {}".format(e.message))
+        print("Quizas tengas que configurar Port Forwarding en el router")
 
 def StartPeerConnection(peerIP, peerPort, peerPubKey):
     """Start chat connection with peer.

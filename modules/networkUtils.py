@@ -131,7 +131,6 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
     while KEEP_TRYING_CONN:
         try:
             s.connect((peerAddr, peerPort))
-            KEEP_TRYING_CONN = False
             success = True
             break
         except socket.error:
@@ -212,17 +211,12 @@ def LaunchUPnP(port, remoteIP):
     """
     upnp = miniupnpc.UPnP()
     upnp.discoverdelay = 10
+    upnp.discover()
+    upnp.selectigd()  # Use IGD (Internet Gateway Device)
 
-    try:
-        upnp.discover()
-        upnp.selectigd()  # Use IGD (Internet Gateway Device)
-        # Args: external_port, protocol, internal_host, internal_port, description, remote_host
-        upnp.addportmapping(port, "TCP", GetLocalIP(), port, "Chat P2P", remoteIP)
-    except ConflictInMappingEntry:
-        print("[*] UPnP ya activado")
-    except Exception as e:
-        print("[!] {}".format(e.message))
-        print("Quizas tengas que configurar Port Forwarding en el router")
+    # Args: external_port, protocol, internal_host, internal_port, description, remote_host
+    upnp.addportmapping(port, "TCP", GetLocalIP(), port, "Chat P2P", remoteIP)
+
 
 def StartPeerConnection(peerIP, peerPort, peerPubKey):
     """Start chat connection with peer.
@@ -234,8 +228,11 @@ def StartPeerConnection(peerIP, peerPort, peerPubKey):
     """
 
     # Start UPnP
-    LaunchUPnP(const.LISTEN_PORT, peerIP)
-    print("[*] UPnP Service launched")
+    try:
+        LaunchUPnP(const.LISTEN_PORT, peerIP)
+        print("[*] UPnP Service launched")
+    except Exception as e:
+        print("[!] Quizas tengas que configurar Port Forwarding en el router")
 
     threads = {
         "local-listen": Thread(target=Listen, args=(const.LISTEN_PORT, peerPubKey)),

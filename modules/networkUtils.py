@@ -5,12 +5,12 @@ from threading import Lock
 import miniupnpc
 import requests
 import socket
+import queue
 import time
 
 
 KEEP_TRYING_CONN = True
 mutexListen = Lock()
-
 
 def GetPublicIP():
     """Give Public IP.
@@ -52,14 +52,22 @@ def LaunchAndWaitThreads(threads):
             threads[threadKey].join(1)
 
 
-def Listen(port, peerPubKey):
+def Listen(port, returns):
     """Listen for incomming Connections.
 
     Bin a socket to localhost and incoming port.
     socket.SO_REUSEADDR and socket.SO_REUSEPORT are used in order to be able
     to bind to an already binded address:port
 
-    When a connection is stablished; it will launch threads to interact with it
+    When a connection is stablished; it will retyrun the socket
+    if a connection is received
+
+    Args:
+        port: Port to bind on localhost
+        returns: Queue to put returns on (Threading)
+
+    Returns
+        See argument returns
     """
     # DOC: https://stackoverflow.com/questions/14388706/socket-options-so-reuseaddr-and-so-reuseport-how-do-they-differ-do-they-mean-t
     # DOC: http://pubs.opengroup.org/onlinepubs/009695399/functions/setsockopt.html
@@ -93,30 +101,27 @@ def Listen(port, peerPubKey):
     if success:
         print("[+] Connection received")
         s.settimeout(0)
-
-        threads = {
-            "send": Thread(target=Send, args=(conn, peerPubKey,)),
-            "receive": Thread(target=Receive, args=(conn,)),
-        }
-
-        LaunchAndWaitThreads(threads)
-
-    s.close()
+        returns.put(conn)  # Add Socket to the resturns queue
+        s.close()
 
 
-def Connect(peerAddr, peerPort, localPort, peerPubKey):
+def Connect(peerAddr, peerPort, localPort, returns):
     """Try to connect to remote host.
 
     Bin a socket to localhost and incoming port.
     socket.SO_REUSEADDR and socket.SO_REUSEPORT are used in order to be able
     to bind to an already binded address:port
 
-    When a connection is stablished; it will launch threads to interact with it
+    When a connection is stablished; it will return the socket.
 
     Args:
         peerAddr: Remote address to try to connect with.
         peerPort: Port to connect to
         localPort: Port to bind on localhost
+        returns: Queue to put returns on (Threading)
+
+    Returns
+        See argument returns
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -146,57 +151,47 @@ def Connect(peerAddr, peerPort, localPort, peerPubKey):
             mutexListen.release()
 
     if success:
-        print("[+] Connected!")
-
-        threads = {
-            "send": Thread(target=Send, args=(s, peerPubKey,)),
-            "receive": Thread(target=Receive, args=(s,)),
-        }
-
-        LaunchAndWaitThreads(threads)
-
-    s.close()
+        print("[+] Connected")
+        returns.put(s)  # Add Socket to the resturns queue
 
 
-def Send(sock, peerPubKey):
+def Send(sock, peerPubKey, msg):
     """Send messagges to socket from user input.
 
     It will send user input until ".quit" is written
 
     Args:
         sock: Socket to send messages to.
+        peerPubKey: Peer Public key to encrypt with
+        msg: message to be encrypted and sent
     """
 
-    while True:
-        msgPlain = input("[you]> ")
-        msgEnc = keyring.EncryptAsimetric(msgPlain, peerPubKey)
-        sock.send(msgEnc)
-
-        if msgPlain == ".quit":
-            break
-
-    sock.close()
+    msgEnc = keyring.EncryptAsimetric(msg, peerPubKey)
+    sock.send(msgEnc)
 
 
 def Receive(sock):
-    """Receive messages from socket and print them.
+    """Receive message from socket and decrypt it
 
-    It will be receiving messages until a ".quit" is received
+    It will receive a messages from the socket and decript it
+    with your private key
 
     Args:
         sock: Socket to receive messages from.
+
+    Returns:
+        A string containing the plain text message received
     """
     pubKey, privKey = keyring.GetKeys()
+    msgEnc = sock.recv(1024)
+    msgPlain = keyring.DecryptAsimetric(msgEnc, privKey)
 
-    while True:
-        msgEnc = sock.recv(1024)
-        msgPlain = keyring.DecryptAsimetric(msgEnc, privKey)
-        print("[peer]> {}".format(msgPlain.decode()))
+    return msgPlain
 
-        if msgPlain == ".quit":
-            break
 
-    sock.close()
+def EndConnections(socks):
+    for s in socks:
+        s.close()
 
 
 def LaunchUPnP(port, remoteIP):
@@ -231,12 +226,29 @@ def StartPeerConnection(peerIP, peerPort, peerPubKey):
     try:
         LaunchUPnP(const.LISTEN_PORT, peerIP)
         print("[*] UPnP Service launched")
-    except Exception as e:
+    except Exception:
         print("[!] Quizas tengas que configurar Port Forwarding en el router")
 
+    # Queue to store threads returns
+    threads_returns = queue.Queue()
+
+    # Threads to be launched
     threads = {
-        "local-listen": Thread(target=Listen, args=(const.LISTEN_PORT, peerPubKey)),
-        "peer-conn": Thread(target=Connect, args=(peerIP, peerPort, const.LISTEN_PORT, peerPubKey)),
+        "local-listen": Thread(target=Listen, args=(const.LISTEN_PORT, threads_returns,)),
+        "peer-conn": Thread(target=Connect, args=(peerIP, peerPort, const.LISTEN_PORT, threads_returns,)),
     }
 
-    LaunchAndWaitThreads(threads)
+    # Start threads
+    for threadKey in threads.keys():
+        threads[threadKey].start()
+
+    # Wait threads to finish
+    for threadKey in threads.keys():
+        threads[threadKey].join(1)  # Timeout to one
+
+    # Retrive threads returns and return them
+    sockets = []
+    for thread in threads:
+        sockets.append(threads_returns.get())
+
+    return sockets

@@ -63,7 +63,7 @@ def main():
     {3}
     """.format(PeerInfo["name"], PeerInfo["ip"], PeerInfo["port"], PeerInfo["pubKey"]))
 
-    network.StartPeerConnection(PeerInfo["ip"], PeerInfo["port"], PeerInfo["pubKey"])
+    network.StartPeerConnection(PeerInfo["ip"], PeerInfo["port"], PeerInfo["pubKey"])        
 
 
 if __name__ == '__main__':

@@ -247,8 +247,4 @@ def StartPeerConnection(peerIP, peerPort, peerPubKey):
         threads[threadKey].join(1)  # Timeout to one
 
     # Retrive threads returns and return them
-    sockets = []
-    for thread in threads:
-        sockets.append(threads_returns.get())
-
-    return sockets
+    return threads_returns.get()

@@ -111,7 +111,7 @@ def DecryptAsimetric(msg, privKey):
     rsaKey = RSA.importKey(privKey)
     plainText = rsaKey.decrypt(msg)
 
-    return plainText
+    return plainText.decode("utf-8")
 
 
 def EncryptSimetric(msg, key):

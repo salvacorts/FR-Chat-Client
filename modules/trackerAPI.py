@@ -17,7 +17,7 @@ class TrackerAPI:
 
     @staticmethod
     def AddUser(name):
-        ip = network.GetLocalIP()
+        ip = network.GetPublicIP()
         pubKey, privKey = keyring.GetKeys()
 
         TrackerAPI.payloadAdd["name"] = name

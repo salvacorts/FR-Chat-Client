@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """A Graphic User Interface for chat client"""
 
@@ -73,7 +73,7 @@ class GUI:
         self.messageInput = ttk.Entry(self.mainChat, textvariable=self.message, width=500)
         self.separator = ttk.Separator(self.mainChat, orient=HORIZONTAL)
         self.sendButton = ttk.Button(self.mainChat, text="Send", command=self.sendMessage)
-        
+
         #Position:
         self.chatPanel.pack(side=TOP, fill=BOTH, expand=True, padx=10, pady=5)
         self.separator.pack(side=TOP, fill=BOTH, expand=True, padx=10, pady=5)
@@ -100,7 +100,7 @@ class GUI:
 
         #Names obtained:
         self.yourName = StringVar()
-        self.friendName = StringVar() 
+        self.friendName = StringVar()
 
         #Elements:
         fontType = font.Font(weight='bold')
@@ -121,7 +121,7 @@ class GUI:
         self.localClientName.focus_set()
         #Make main window wait for that
         self.mainChat.wait_window(self.inputNamesWindow)
-    
+
 
     #Function called when chat button is pressed (nameCaptureWindow):
     def startChat(self):
@@ -137,7 +137,7 @@ class GUI:
         #Obtain User and Peer information:
         self.UserInfo = UpdateUserInfo(self.yourName.get())
         self.PeerInfo = TrackerAPI.GetUser(self.friendName.get())
-      
+
         if self.PeerInfo is None:
             print("[!] El nombre de tu amigo no existe")
             exit(1)

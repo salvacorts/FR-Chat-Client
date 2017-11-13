@@ -5,7 +5,6 @@ import modules.keyring as keyring
 import requests
 import json
 
-
 class TrackerAPI:
     baseUrl = "https://fr-ugr-rest.herokuapp.com"
     urlAdd = baseUrl + "/users/add/"

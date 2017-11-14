@@ -1,7 +1,10 @@
-class DuplicatedUser(Exception): pass
+class DuplicatedUser(Exception):
+    pass
 
 
-class UnknownUser(Exception): pass
+class UnknownUser(Exception):
+    pass
 
 
-class InvalidCredentials(Exception): pass
+class InvalidCredentials(Exception):
+    pass

@@ -8,6 +8,13 @@ from threading import Thread
 from modules.trackerAPI import TrackerAPI
 import modules.networkUtils as network
 
+#Color Palette:
+WINDOW = '#34495e'
+DETAILS = '#2c3e50'
+BUTTON = '#16a085'
+CHAT_TEXT = '#3b3b3b'
+WHITE = '#fafafa'
+
 
 #Function that center a window on the screen:
 def center_window(window, width, height):
@@ -59,6 +66,7 @@ class GUI:
         #Basic propierties
         self.mainChat.geometry('500x450')
         center_window(self.mainChat, 500, 450)
+        self.mainChat.configure(bg=WINDOW)
         self.mainChat.title("Lmao-Chat Desktop")
         self.mainChat.lift()
         #Not resizable:
@@ -68,11 +76,14 @@ class GUI:
         self.message = StringVar()
 
         #Elements:
-        self.chatPanel = Text(self.mainChat, state='disabled')
-        self.chatPanel.configure(bg = 'white')
+        self.chatPanel = Text(self.mainChat, fg=CHAT_TEXT, state='disabled')
+        self.chatPanel.configure(bg = WHITE)
         self.messageInput = ttk.Entry(self.mainChat, textvariable=self.message, width=500)
-        self.separator = ttk.Separator(self.mainChat, orient=HORIZONTAL)
-        self.sendButton = ttk.Button(self.mainChat, text="Send", command=self.sendMessage)
+        ttk.Style().configure('black.TSeparator', foreground='black', background=DETAILS)
+        self.separator = ttk.Separator(self.mainChat, style= "black.TSeparator", orient=HORIZONTAL)
+        ttk.Style().configure('black/green.TButton', foreground='white', background=BUTTON)
+        self.sendButton = ttk.Button(self.mainChat, text="Send", style="black/green.TButton", command=self.sendMessage)
+
 
         #Position:
         self.chatPanel.pack(side=TOP, fill=BOTH, expand=True, padx=10, pady=5)
@@ -93,6 +104,7 @@ class GUI:
 
         #Basic propierties:
         self.inputNamesWindow.geometry('300x200')
+        self.inputNamesWindow.configure(bg=WINDOW)
         center_window(self.inputNamesWindow, 300, 200)
         self.inputNamesWindow.title("Lmao-Chat Desktop (Names)")
         #Not resizable:
@@ -104,11 +116,13 @@ class GUI:
 
         #Elements:
         fontType = font.Font(weight='bold')
-        self.nameLabel1 = ttk.Label(self.inputNamesWindow, text="Your name:", font=fontType)
-        self.nameLabel2 = ttk.Label(self.inputNamesWindow, text="Your friend's name:", font=fontType)
+        ttk.Style().configure('black.TLabel', foreground='white', background=WINDOW)
+        self.nameLabel1 = ttk.Label(self.inputNamesWindow, text="Your name:", style="black.TLabel", font=fontType)
+        self.nameLabel2 = ttk.Label(self.inputNamesWindow, text="Your friend's name:", style="black.TLabel", font=fontType)
         self.localClientName = ttk.Entry(self.inputNamesWindow, textvariable=self.yourName, width=30)
         self.remoteClientName = ttk.Entry(self.inputNamesWindow, textvariable=self.friendName, width=30)
-        self.chatButton = ttk.Button(self.inputNamesWindow, text="Chat!", command=self.startChat)
+        ttk.Style().configure('black/green.TButton', foreground='white', background=BUTTON)
+        self.chatButton = ttk.Button(self.inputNamesWindow, text="Chat!", style="black/green.TButton", command=self.startChat)
 
         #Element's position:
         self.nameLabel1.pack(side=TOP, fill=BOTH, expand=True, padx=5, pady=5)

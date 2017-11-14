@@ -12,6 +12,7 @@ import time
 KEEP_TRYING_CONN = True
 mutexListen = Lock()
 
+
 def GetPublicIP():
     """Give Public IP.
 
@@ -41,17 +42,6 @@ def GetLocalIP():
     return ip
 
 
-def LaunchAndWaitThreads(threads):
-    """Launch and wait for given threads to finish.
-    """
-    for threadKey in threads.keys():
-        threads[threadKey].start()
-
-    while threads:
-        for threadKey in threads.keys():
-            threads[threadKey].join(1)
-
-
 def Listen(port, returns):
     """Listen for incomming Connections.
 
@@ -59,7 +49,7 @@ def Listen(port, returns):
     socket.SO_REUSEADDR and socket.SO_REUSEPORT are used in order to be able
     to bind to an already binded address:port
 
-    When a connection is stablished; it will retyrun the socket
+    When a connection is stablished; it will return the socket
     if a connection is received
 
     Args:
@@ -234,8 +224,11 @@ def StartPeerConnection(peerIP, peerPort, peerPubKey):
 
     # Threads to be launched
     threads = {
-        "local-listen": Thread(target=Listen, args=(const.LISTEN_PORT, threads_returns,)),
-        "peer-conn": Thread(target=Connect, args=(peerIP, peerPort, const.LISTEN_PORT, threads_returns,)),
+        "local-listen": Thread(target=Listen, args=(const.LISTEN_PORT,
+                                                    threads_returns,)),
+        "peer-conn": Thread(target=Connect, args=(peerIP, peerPort,
+                                                  const.LISTEN_PORT,
+                                                  threads_returns,)),
     }
 
     # Start threads

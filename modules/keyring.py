@@ -109,9 +109,9 @@ def DecryptAsimetric(msg, privKey):
         A string containing plaintext decrypted message
     """
     rsaKey = RSA.importKey(privKey)
-    plainText = rsaKey.decrypt(msg)
+    plainText = rsaKey.decrypt(msg).decode()
 
-    return plainText.decode("utf-8")
+    return plainText
 
 
 def EncryptSimetric(msg, key):

@@ -1,5 +1,7 @@
 # P2P Encrypted Chat
 
+![Chat](chat.png)
+
 This is a project for Network Fundamentls subject on the University of Granada. The goal is to analyce or develop a system which use encryption and multiple message exchange between client-server and/or client-client.
 
 This project is divided in two repositories attending to its main functionality:

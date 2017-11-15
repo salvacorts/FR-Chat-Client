@@ -23,13 +23,13 @@ pip install -r requirements.txt
 
 ## How does it works:
 
-On one side, we have a REST Server, written on pyhton with Hug, that works as a traker which let the user get the necessary information to connect with it's peer. There are three basic operations that can be performed with the tracker:
+On one hand, we have a REST Server, written on pyhton with Hug, that works as a traker which let the user get the necessary information to connect with it's peer. There are three basic operations that can be performed with the tracker:
 
 1. **Add user information:** It will add a user name to its DB alongside with it's IP address, it's Listening Port number and it's RSA public key.
 2. **Get User information:** The client will get the IP address, the listening port number and the public RSA key for the peer identified by the name given. This information is returned as a JSON
 3. **Update user information:** It will update the Listening port and the IP address. To be able to update this information, the user must send a validation message alongside the new information. This validation message is signed with the user's private rsa key and will be validated by the server with his last public key stored.
 
-On the other side, we have the clients which besides interacting with the server, it also interact directly with other clients as a Peer to Peer chat service. It launch two threads:
+On the other hand, we have the clients which besides interacting with the server, they also interact directly with other clients as a Peer to Peer chat service. It launch two threads:
 
 The first one, will bind a socket to the local listening port and it will start listening for incoming connections.
 
@@ -39,7 +39,7 @@ Note that binding to the same address on two different processes is only possibl
 
 Once a connection is stablished, these two threads will stop and messages will be sent through the socket which has stablished connection earlier.
 
-This is a secure chat which uses asymetric encryption. All mesages sent will be encrypted with the receiver public RSA key, and every message received will be decrypted with the user private RSA key.
+This is a secure chat which uses asymmetric encryption. All mesages sent will be encrypted with the receiver public RSA key, and every message received will be decrypted with the user private RSA key.
 
 As this is a P2P application, Ports must be opened on user's routers. This application will try to open them with UPnP. If you dont have this feature activated, or it doesnt work, you will have to make a manual Port Forwarding.
 
